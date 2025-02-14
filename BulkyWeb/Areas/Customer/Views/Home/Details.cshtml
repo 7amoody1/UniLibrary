@@ -1,144 +1,221 @@
 ﻿@model ShoppingCart
 
-<form method="post">
-    <input hidden asp-for="ProductId" />
-    <div class="card shadow border-0 mt-4 mb-4">
-        <div class="card-header bg-secondary bg-gradient text-light py-4">
-            <div class="row">
+<form method="post" id="mainForm">
+    <input hidden asp-for="ProductId"/>
+    <div class="card shadow border-0 mt-4 mb-4 overflow-hidden">
+        <div class="card-header bg-dark bg-gradient text-light py-4">
+            <div class="row align-items-center">
                 <div class="col-12 text-center">
-                    <h3 class="text-white text-uppercase">@Model.Product.Title</h3>
-                    <p class="text-white-50 fw-semibold mb-0">by @Model.Product.Author</p>
+                    <h1 class="text-white fw-bold display-6">@Model.Product.Title</h1>
+                    <p class="text-light fw-medium mb-0">by @Model.Product.Author</p>
                 </div>
             </div>
         </div>
-        <div class="card-body">
-            <div class="py-3">
-                <div class="row">
-                    <div class="col-6 col-md-2 offset-lg-1 pb-1">
-                        <a asp-action="Index" class="btn btn-outline-primary bg-gradient mb-5 fw-semibold btn-sm text-uppercase">
-                            <small>Back to home</small>
-                        </a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12 col-lg-3 offset-lg-1 text-center mb-3">
-
-
-
-                        @if (Model.Product.ProductImages != null && Model.Product.ProductImages.Count > 0) {
-                            <div id="carouselExampleIndicators" class="carousel  slide" data-bs-ride="carousel">
-                                <div class="carousel-indicators">
-
-                                    @foreach(var imageWithIndex in 
-                                    Model.Product.ProductImages
-                                   .Select((image, index) => new { Image = image, Index = index })) {
-                                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="@imageWithIndex.Index" 
-                                        class="@(imageWithIndex.Index==0?"active":"")" aria-current="true" aria-label="Slide 1"></button>
-                                    }
-
-                                   
-                                </div>
-                                <div class="carousel-inner">
-                                    @foreach (var imageWithIndex in
-                                   Model.Product.ProductImages
-                                   .Select((image, index) => new { Image = image, Index = index })) {
-                                        <div class="@(imageWithIndex.Index==0?"carousel-item active":"carousel-item")">
-                                            <img src="@imageWithIndex.Image.ImageUrl" class="d-block w-100" alt="...">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <!-- Image Carousel Column -->
+                <div class="col-12 col-lg-4">
+                    @if (Model.Product.ProductImages != null && Model.Product.ProductImages.Count > 0)
+                    {
+                        <div id="productCarousel" class="carousel slide shadow rounded-3" data-bs-ride="carousel">
+                            <div class="carousel-indicators">
+                                @for (int i = 0; i < Model.Product.ProductImages.Count; i++)
+                                {
+                                    <button type="button" data-bs-target="#productCarousel" 
+                                            data-bs-slide-to="@i" 
+                                            class="@(i == 0 ? "active" : "")"
+                                            aria-label="Slide @(i+1)"></button>
+                                }
+                            </div>
+                            <div class="carousel-inner ratio ratio-1x1">
+                                @foreach (var (image, index) in Model.Product.ProductImages.Select((img, idx) => (img, idx)))
+                                {
+                                    <div class="carousel-item @(index == 0 ? "active" : "")">
+                                        <img src="@image.ImageUrl" class="d-block w-100 object-fit-cover" alt="@Model.Product.Title cover image">
                                     </div>
-                                   }
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Previous</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Next</span>
-                                </button>
+                                }
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                <!-- Product Details Column -->
+                <div class="col-12 col-lg-8">
+                    <div class="d-flex flex-column h-100">
+                        <!-- Category and Actions -->
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="badge bg-primary bg-opacity-10 text-white fs-6">@Model.Product.Category.Name</div>
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-left me-2"></i>Back
+                            </a>
+                        </div>
+
+                        <!-- Fixed Product Details -->
+                        <div class="product-details-section">
+                            <div class="mb-4">
+                                <h4 class="text-muted mb-3">Details</h4>
+                                <dl class="row">
+                                    <dt class="col-sm-3">ISBN</dt>
+                                    <dd class="col-sm-9">@Model.Product.ISBN</dd>
+                                </dl>
                             </div>
 
-                        }
+                            <div class="mb-4">
+                                <h4 class="text-muted mb-3">Description</h4>
+                                <div class="text-dark lh-base">@Html.Raw(Model.Product.Description)</div>
+                            </div>
+                        </div>
 
-                       
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 mb-4 flex-wrap">
+                            <button type="button" id="buyButton" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-currency-dollar me-2"></i>Buy
+                            </button>
+                            <button type="button" id="borrowButton" class="btn btn-info flex-grow-1">
+                                <i class="bi bi-book me-2"></i>Borrow
+                            </button>
+                        </div>
 
-
-
-
-
-
+                        <!-- Dynamic Content Section -->
+                        <div id="dynamicContent" class="mb-4"></div>
                     </div>
-                    <div class="col-12 col-lg-6 offset-lg-1">
-
-                        <div class="col-12 col-md-6 pb-4">
-                            <span class="badge">@Model.Product.Category.Name</span>
-                        </div>
-                        <div class="row ps-2">
-                            <h6 class="text-dark text-opacity-50 ">ISBN : @Model.Product.ISBN</h6>
-                        </div>
-                        <div class="row ps-2">
-                            <h6 class="text-dark text-opacity-50  pb-2">
-                                List Price:
-                                <span class="text-decoration-line-through">
-                                    @Model.Product.ListPrice.ToString("c")
-                                </span>
-                            </h6>
-                        </div>
-                        <div class="row text-center ps-2">
-                            <div class="p-1 col-3 col-lg-2 bg-white border-bottom">
-                                <div class="text-dark text-opacity-50 fw-semibold">Quantity</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white border-bottom">
-                                <div class="text-dark text-opacity-50 fw-semibold">1-50</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white border-bottom">
-                                <div class="text-dark text-opacity-50 fw-semibold">51-100</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white border-bottom">
-                                <div class="text-dark text-opacity-50 fw-semibold">100+</div>
-                            </div>
-                        </div>
-                        <div class="row text-center ps-2">
-                            <div class="p-1 col-3 col-lg-2 bg-white text-warning fw-bold">
-                                <div>Price</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white text-warning fw-bold">
-                                <div>@Model.Product.Price.ToString("c")</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white text-warning fw-bold">
-                                <div>@Model.Product.Price50.ToString("c")</div>
-                            </div>
-                            <div class="p-1 col-3 col-lg-2 bg-white text-warning fw-bold">
-                                <div>@Model.Product.Price100.ToString("c")</div>
-                            </div>
-                        </div>
-                        <div class="row pl-2 my-3">
-                            <p class="text-secondary lh-sm">@Html.Raw(Model.Product.Description)</p>
-                        </div>
-                        <div class="row pl-2 mb-3">
-                            <div class="col-md-4">
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text bg-primary text-white border-0 fw-semibold"
-                                          id="inputGroup-sizing-default">
-                                        Count
-                                    </span>
-                                    <input asp-for="Count" type="number" value="1" class="form-control text-end"
-                                           aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" />
-
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12 col-md-6 pb-1">
-                                <button type="submit"
-                                        class="btn btn-primary bg-gradient  w-100 py-2 text-uppercase fw-semibold">
-                                    Add to Cart 
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<!-- Templates -->
+<template id="buyTemplate">
+    <div class="buy-summary bg-light p-4 rounded-3 shadow-sm mb-4">
+        <h5 class="mb-3"><i class="bi bi-receipt me-2"></i>Purchase Summary</h5>
+        <div class="row">
+            <div class="col-6">
+                <p class="mb-1">Unit Price:</p>
+                <p class="mb-1">Quantity:</p>
+                <p class="mb-0 fw-bold">Total Price:</p>
+            </div>
+            <div class="col-6 text-end">
+                <p class="mb-1 unit-price">$@Model.Product.Price.ToString("0.00")</p>
+                <p class="mb-1 display-quantity">1</p>
+                <p class="mb-0 fw-bold text-success total-price">$@Model.Product.Price.ToString("0.00")</p>
+            </div>
+        </div>
+        <div class="row mt-4">
+                   <div class="col-md-6">
+                       <div class="input-group mb-3">
+                           <span class="input-group-text bg-primary text-white">Qty</span>
+                           <input type="number" name="Count" value="1" min="1" max="1000"
+                                  class="form-control quantity-input">
+                       </div>
+                   </div>
+                   <div class="col-md-6">
+                           <button type="submit" class="btn btn-primary w-100 fw-bold">
+                               <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                           </button>
+       
+                       </div>
+               </div>
+    </div>
+</template>
+
+<template id="borrowTemplate">
+    <div class="borrow-dates bg-light p-4 rounded-3 shadow-sm mb-4">
+        <h5 class="mb-3"><i class="bi bi-calendar me-2"></i>Borrowing Period</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control start-date" name="StartDate" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control end-date" name="EndDate" required>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-primary text-white">Qty</span>
+                    <input type="number" name="Count" value="1" min="1" max="1000"
+                           class="form-control quantity-input">
+                </div>
+            </div>
+            <div class="col-md-6">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                    </button>
+
+                </div>
+        </div>
+    </div>  
+</template>
+
+<style>
+    .product-details-section {
+        position: relative;
+        z-index: 1;
+    }
+    .buy-summary, .borrow-dates {
+        animation: slideDown 0.3s ease-out;
+    }
+    @@keyframes slideDown {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .quantity-input::-webkit-inner-spin-button,
+    .quantity-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle Buy button click
+            $('#buyButton').click(function() {
+                const template = $('#buyTemplate').html();
+                $('#dynamicContent').html(template);
+                updatePriceDisplay();
+            });
+
+            // Handle Borrow button click
+            $('#borrowButton').click(function() {
+                const template = $('#borrowTemplate').html();
+                $('#dynamicContent').html(template);
+                const today = new Date().toISOString().split('T')[0];
+                const nextWeek = new Date(Date.now() + 604800000).toISOString().split('T')[0];
+                $('.start-date').attr({'min': today, 'value': today});
+                $('.end-date').attr({'min': today, 'value': nextWeek});
+            });
+
+            // Handle quantity changes
+            $(document).on('input', '.quantity-input', function() {
+                const quantity = parseInt($(this).val()) || 1;
+                $(this).val(quantity > 1000 ? 1000 : quantity < 1 ? 1 : quantity);
+                
+                if ($('#dynamicContent').find('.buy-summary').length) {
+                    updatePriceDisplay();
+                }
+            });
+
+            function updatePriceDisplay() {
+                const quantity = parseInt($('.quantity-input').val()) || 1;
+                const unitPrice = @Model.Product.Price;
+                const totalPrice = quantity * unitPrice;
+                
+                $('.unit-price').text('$' + unitPrice.toFixed(2));
+                $('.display-quantity').text(quantity);
+                $('.total-price').text('$' + totalPrice.toFixed(2));
+            }
+        });
+    </script>
+}
