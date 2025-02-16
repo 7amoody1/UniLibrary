@@ -1,7 +1,9 @@
 ﻿@model ShoppingCart
+@using BulkyBook.Utility
 
 <form method="post" id="mainForm">
     <input hidden asp-for="ProductId"/>
+    <input hidden  id="order-type" name="type" asp-for="Type"/>
     <div class="card shadow border-0 mt-4 mb-4 overflow-hidden">
         <div class="card-header bg-dark bg-gradient text-light py-4">
             <div class="row align-items-center">
@@ -180,10 +182,12 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
+                
             // Handle Buy button click
             $('#buyButton').click(function() {
                 const template = $('#buyTemplate').html();
                 $('#dynamicContent').html(template);
+                $('#order-type').val('@SD.Buy');
                 updatePriceDisplay();
             });
 
@@ -195,6 +199,7 @@
                 const nextWeek = new Date(Date.now() + 604800000).toISOString().split('T')[0];
                 $('.start-date').attr({'min': today, 'value': today});
                 $('.end-date').attr({'min': today, 'value': nextWeek});
+                $('#order-type').val('@SD.Borrow');
             });
 
             // Handle quantity changes

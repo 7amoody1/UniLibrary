@@ -33,7 +33,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             ShoppingCart cart = new() {
                 Product = _unitOfWork.Product.Get(u => u.Id == productId, includeProperties: "Category,ProductImages"),
                 Count = 1,
-                ProductId = productId
+                ProductId = productId 
             };
             return View(cart);
         }
@@ -46,10 +46,10 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
             shoppingCart.ApplicationUserId= userId;
 
-            ShoppingCart cartFromDb = _unitOfWork.ShoppingCart.Get(u=>u.ApplicationUserId == userId &&
-            u.ProductId==shoppingCart.ProductId);
+            var cartFromDb = _unitOfWork.ShoppingCart.Get(u=>u.ApplicationUserId == userId &&
+            u.ProductId==shoppingCart.ProductId && u.Type == shoppingCart.Type);
 
-            if (cartFromDb != null) {
+            if (cartFromDb is not null) {
                 //shopping cart exists
                 cartFromDb.Count += shoppingCart.Count;
                 _unitOfWork.ShoppingCart.Update(cartFromDb);
@@ -63,10 +63,6 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                 _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId).Count());
             }
             TempData["success"] = "Cart updated successfully";
-
-           
-
-
             return RedirectToAction(nameof(Index));
         }
 

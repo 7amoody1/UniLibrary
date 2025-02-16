@@ -30,7 +30,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
             var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             ShoppingCartVM = new() {
-                ShoppingCartList = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId,
+                ShoppingCartList = _unitOfWork.ShoppingCart
+                    .GetAll(u => u.ApplicationUserId == userId,
                 includeProperties: "Product"),
                 OrderHeader= new()
             };
@@ -38,9 +39,10 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
             IEnumerable<ProductImage> productImages = _unitOfWork.ProductImage.GetAll();
 
             foreach (var cart in ShoppingCartVM.ShoppingCartList) {
-                cart.Product.ProductImages = productImages.Where(u => u.ProductId == cart.Product.Id).ToList();
+                cart.Product.ProductImages = productImages
+                    .Where(u => u.ProductId == cart.Product.Id).ToList();
                 cart.Price = GetPriceBasedOnQuantity(cart);
-                ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+                ShoppingCartVM.OrderHeader.OrderTotal += cart.Price * cart.Count;
             }
 
             return View(ShoppingCartVM);
@@ -227,17 +229,9 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
 
         private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart) {
-            if (shoppingCart.Count <= 50) {
-                return shoppingCart.Product.Price;
-            }
-            else {
-                if (shoppingCart.Count <= 100) {
-                    return shoppingCart.Product.Price50;
-                }
-                else {
-                    return shoppingCart.Product.Price100;
-                }
-            }
+            return shoppingCart.Type == SD.Buy
+                ? shoppingCart.Product.Price
+                : 0;
         }
     }
 }
