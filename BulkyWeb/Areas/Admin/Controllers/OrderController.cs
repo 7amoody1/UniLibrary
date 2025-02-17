@@ -15,7 +15,6 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
     [Authorize]
 	public class OrderController : Controller {
 
-
 		private readonly IUnitOfWork _unitOfWork;
         [BindProperty]
         public OrderVM OrderVM { get; set; }
@@ -24,8 +23,43 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index() {
-            return View();
+        public IActionResult Index(string? status)
+        {
+            List<OrderHeader> orders;
+            if (status is null)
+            {
+                if (User.IsInRole(SD.Role_Admin))
+                {
+                    orders = _unitOfWork.OrderHeader
+                        .GetAll(includeProperties: "ApplicationUser")
+                        .ToList();
+                }
+                else
+                {
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    orders = _unitOfWork.OrderHeader
+                        .GetAll(o => o.ApplicationUserId == userId, includeProperties: "ApplicationUser")
+                        .ToList();
+                }
+            }
+            else
+            {
+            
+                if (User.IsInRole(SD.Role_Admin))
+                {
+                    orders = _unitOfWork.OrderHeader
+                        .GetAll(o => o.OrderStatus == status, includeProperties: "ApplicationUser")
+                        .ToList();
+                }
+                else
+                {
+                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    orders = _unitOfWork.OrderHeader
+                        .GetAll(o => o.ApplicationUserId == userId && o.OrderStatus == status, includeProperties: "ApplicationUser")
+                        .ToList();
+                }
+            }
+            return View(orders);
         }
 
         public IActionResult Details(int orderId) {

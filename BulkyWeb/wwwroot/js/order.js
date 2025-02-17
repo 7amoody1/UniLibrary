@@ -2,28 +2,13 @@ var dataTable;
 
 $(document).ready(function () {
     var url = window.location.search;
-    if (url.includes("inprocess")) {
-        loadDataTable("inprocess");
+    if (url.includes("pending")) {
+        loadDataTable("pending");
+    } else if (url.includes("completed")) {
+        loadDataTable("completed");
+    } else  if (url.includes("all")) {
+        loadDataTable("approved");
     }
-    else {
-        if (url.includes("completed")) {
-            loadDataTable("completed");
-        }
-        else {
-            if (url.includes("pending")) {
-                loadDataTable("pending");
-            }
-            else {
-                if (url.includes("approved")) {
-                    loadDataTable("approved");
-                }
-                else {
-                    loadDataTable("all");
-                }
-            }
-        }
-    }
-
 });
 
 function loadDataTable(status) {
