@@ -21,6 +21,7 @@ namespace BulkyBook.DataAcess.Data
         public DbSet<OrderHeader> OrderHeaders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<Fine> Fines { get; set; }  
+        public DbSet<WishItem> WishItems { get; set; }  
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

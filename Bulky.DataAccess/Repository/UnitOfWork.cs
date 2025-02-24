@@ -20,6 +20,7 @@ namespace BulkyBook.DataAccess.Repository
         public IOrderDetailRepository OrderDetail { get; private set; }
         public IProductImageRepository ProductImage { get; private set; }
         public IFineRepository Fine { get; }
+        public IWishItemRepository WishItem { get; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -33,6 +34,7 @@ namespace BulkyBook.DataAccess.Repository
             OrderHeader = new OrderHeaderRepository(_db);
             OrderDetail = new OrderDetailRepository(_db);   
             Fine = new FineRepository(_db);
+            WishItem = new WishItemRepository(_db);
         }
 
         public void Save()

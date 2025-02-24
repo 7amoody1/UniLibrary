@@ -33,7 +33,7 @@
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="Admin" asp-controller="Order" asp-action="Index">Manage Order</a>
+                            <a class="nav-link" asp-area="Admin" asp-controller="Order" asp-action="Index" asp-route-requestedData="@SD.Fines">Order Details</a>
                         </li>
                         @if (User.IsInRole(SD.Role_Admin))
                         {

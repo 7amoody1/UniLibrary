@@ -9,6 +9,7 @@ using Stripe;
 using Stripe.Checkout;
 using System.Diagnostics;
 using System.Security.Claims;
+using TablesVM = BulkyBook.Models.ViewModels.TablesVM;
 
 namespace BulkyBookWeb.Areas.Admin.Controllers {
 	[Area("admin")]
@@ -23,43 +24,55 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
             _unitOfWork = unitOfWork;
         }
 
-        public IActionResult Index(string? status)
+        public IActionResult Index(string requestedData)
         {
-            List<OrderHeader> orders;
-            if (status is null)
+            TablesVM tableVm;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            switch (requestedData)
             {
-                if (User.IsInRole(SD.Role_Admin))
+                case SD.Fines:
                 {
-                    orders = _unitOfWork.OrderHeader
-                        .GetAll(includeProperties: "ApplicationUser")
-                        .ToList();
+                    var fines = User.IsInRole(SD.Role_Admin) 
+                        ? _unitOfWork.Fine.GetAll(includeProperties:"ApplicationUser,Product").ToList() 
+                        : _unitOfWork.Fine.GetAll(f => f.ApplicationUserId == userId, includeProperties:"Product").ToList();
+                    tableVm = new TablesVM
+                    {
+                        FinesList = fines,
+                        RequestedData = SD.Fines
+                    };
+                    return View(tableVm);    
                 }
-                else
+                case SD.Orders:
                 {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    orders = _unitOfWork.OrderHeader
-                        .GetAll(o => o.ApplicationUserId == userId, includeProperties: "ApplicationUser")
-                        .ToList();
+                    var orderHeaders = User.IsInRole(SD.Role_Admin)
+                     ? _unitOfWork.OrderHeader.GetAll(includeProperties:"ApplicationUser").ToList() 
+                     : _unitOfWork.OrderHeader.GetAll(f => f.ApplicationUserId == userId).ToList();
+
+                    tableVm = new TablesVM
+                    {
+                        OrderHeadersList = orderHeaders,
+                        RequestedData = SD.Orders
+                    };
+                    return View(tableVm);
+                }
+                default:
+                {
+                    var wishItems = User.IsInRole(SD.Role_Admin)
+                        ? _unitOfWork.WishItem.GetAll().ToList() 
+                        : _unitOfWork.WishItem.GetAll(f => f.ApplicationUserId == userId).ToList();
+                    tableVm = new TablesVM
+                    {
+                        WishItemsList = wishItems,
+                        RequestedData = SD.WishItems
+                    };
+                    return View(tableVm);
                 }
             }
-            else
-            {
-            
-                if (User.IsInRole(SD.Role_Admin))
-                {
-                    orders = _unitOfWork.OrderHeader
-                        .GetAll(o => o.OrderStatus == status, includeProperties: "ApplicationUser")
-                        .ToList();
-                }
-                else
-                {
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    orders = _unitOfWork.OrderHeader
-                        .GetAll(o => o.ApplicationUserId == userId && o.OrderStatus == status, includeProperties: "ApplicationUser")
-                        .ToList();
-                }
-            }
-            return View(orders);
+        }
+
+        public void Pay()
+        {    
+            // Payment goes here
         }
 
         public IActionResult Details(int orderId) {

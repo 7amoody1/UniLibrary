@@ -31,6 +31,10 @@ namespace BulkyBook.Utility
 		public const string Delay = "Delay";
 		public const string Corrupted = "Corrupted";
 		
+		public const string Fines = "Fines";
+		public const string Orders = "Orders";
+		public const string WishItems = "WishItems";
+		
         public const string SessionCart = "SessionShoppingCart";
 
 
