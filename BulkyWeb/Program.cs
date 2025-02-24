@@ -1,3 +1,4 @@
+using BulkyBook.DataAccess.Data;
 using BulkyBook.DataAccess.Repository;
 using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.DataAcess.Data;
@@ -7,13 +8,21 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using BulkyBook.Utility;
 using Stripe;
 using BulkyBook.DataAccess.DbInitializer;
+using BulkyBookWeb.BackgroundJobs;
+using Hangfire;
+using Hangfire.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<ApplicationDbContext>(options=> 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var hangConnectionString = builder.Configuration.GetConnectionString("HangfireConnection");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options=> options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<HangfireDbContext>(options=> options.UseSqlServer(hangConnectionString));
+
 
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection(StripeSettings.SectionName));
 
@@ -36,6 +45,18 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IMailer, Mailer>();
 builder.Services.AddScoped<IEmailSender, EmailSenderAdapter>();
+
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseStorage(
+        new SqlServerStorage(hangConnectionString, 
+        new SqlServerStorageOptions())
+    ));
+
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -58,6 +79,22 @@ app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
     pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
+
+app.UseHangfireDashboard();
+app.MapHangfireDashboard("/hangfire");
+
+/*
+RecurringJob.AddOrUpdate<FineBackgroundJob>(
+    "check-delay-returns",
+    job => job.CheckDelayReturns(),
+    Cron.Daily(14, 0)); // Runs every day at 2:00 PM
+    */
+    
+RecurringJob.AddOrUpdate<FineBackgroundJob>(
+    "check-delay-returns",
+    job => job.CheckDelayReturns(),
+    Cron.Minutely); 
+
 
 app.Run();
 

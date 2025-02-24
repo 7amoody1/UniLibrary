@@ -1,11 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BulkyBook.Models {
     public class OrderDetail {
@@ -15,8 +10,7 @@ namespace BulkyBook.Models {
         [ForeignKey("OrderHeaderId")]
         [ValidateNever]
         public OrderHeader OrderHeader { get; set; }
-
-
+        
         [Required]
         public int ProductId { get; set; }
         [ForeignKey("ProductId")]
@@ -25,6 +19,12 @@ namespace BulkyBook.Models {
 
         public int Count { get; set; }
         public double Price { get; set; }
+
+        public string Type { get; set; } = "Borrow";
+        public DateTime? StartBorrowDate { get; set; }
+        public DateTime? EndBorrowDate { get; set; }
+
+        public bool IsReturned { get; set; }
 
     }
 }

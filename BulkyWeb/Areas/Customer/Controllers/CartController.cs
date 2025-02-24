@@ -38,7 +38,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
             IEnumerable<ProductImage> productImages = _unitOfWork.ProductImage.GetAll();
 
-            foreach (var cart in ShoppingCartVM.ShoppingCartList) {
+             foreach (var cart in ShoppingCartVM.ShoppingCartList) {
                 cart.Product.ProductImages = productImages
                     .Where(u => u.ProductId == cart.Product.Id).ToList();
                 cart.Price = GetPriceBasedOnQuantity(cart);
@@ -113,7 +113,10 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
                     ProductId = cart.ProductId,
                     OrderHeaderId = ShoppingCartVM.OrderHeader.Id,
                     Price = cart.Price,
-                    Count = cart.Count
+                    Count = cart.Count, 
+                    Type = cart.Type, 
+                    StartBorrowDate = cart.StartBorrowDate,
+                    EndBorrowDate = cart.EndBorrowDate
                 };
                 _unitOfWork.OrderDetail.Add(orderDetail);
                 _unitOfWork.Save();

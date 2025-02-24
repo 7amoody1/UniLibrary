@@ -28,6 +28,9 @@ namespace BulkyBook.Utility
 		public const string Buy = "Buy";
 		public const string Borrow = "Borrow";
 
+		public const string Delay = "Delay";
+		public const string Corrupted = "Corrupted";
+		
         public const string SessionCart = "SessionShoppingCart";
 
 

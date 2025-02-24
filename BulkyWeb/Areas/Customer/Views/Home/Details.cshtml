@@ -4,6 +4,7 @@
 <form method="post" id="mainForm">
     <input hidden asp-for="ProductId"/>
     <input hidden  id="order-type" name="type" asp-for="Type"/>
+    
     <div class="card shadow border-0 mt-4 mb-4 overflow-hidden">
         <div class="card-header bg-dark bg-gradient text-light py-4">
             <div class="row align-items-center">
@@ -59,6 +60,7 @@
                                 <i class="bi bi-arrow-left me-2"></i>Back
                             </a>
                         </div>
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <!-- Fixed Product Details -->
                         <div class="product-details-section">
@@ -134,12 +136,12 @@
         <h5 class="mb-3"><i class="bi bi-calendar me-2"></i>Borrowing Period</h5>
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control start-date" name="StartDate" required>
+                <label asp-for="StartBorrowDate" class="form-label">Start Date</label>
+                <input asp-for="StartBorrowDate" type="date" value="@Model.StartBorrowDate" class="form-control start-date" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control end-date" name="EndDate" required>
+                <label asp-for="EndBorrowDate" class="form-label">End Date</label>
+                <input asp-for="EndBorrowDate" type="date" value="@Model.EndBorrowDate" class="form-control end-date" required>
             </div>
         </div>
         <div class="row mt-4">
@@ -151,13 +153,13 @@
                 </div>
             </div>
             <div class="col-md-6">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">
-                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
-                    </button>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">
+                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                </button>
 
-                </div>
+            </div>
         </div>
-    </div>  
+    </div>
 </template>
 
 <style>
@@ -197,8 +199,8 @@
                 $('#dynamicContent').html(template);
                 const today = new Date().toISOString().split('T')[0];
                 const nextWeek = new Date(Date.now() + 604800000).toISOString().split('T')[0];
-                $('.start-date').attr({'min': today, 'value': today});
-                $('.end-date').attr({'min': today, 'value': nextWeek});
+                $('.start-date').attr({ 'value': today});
+                $('.end-date').attr({'value': nextWeek});
                 $('#order-type').val('@SD.Borrow');
             });
 

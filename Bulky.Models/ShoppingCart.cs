@@ -21,5 +21,7 @@ namespace BulkyBook.Models {
 		public double Price { get; set; }
 
 		public string Type { get; set; } = "Borrow";
+		public DateTime? StartBorrowDate { get; set; }
+		public DateTime? EndBorrowDate { get; set; }
     }
 }
