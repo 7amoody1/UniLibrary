@@ -9,6 +9,7 @@ using Stripe;
 using Stripe.Checkout;
 using System.Diagnostics;
 using System.Security.Claims;
+using Product = Stripe.Product;
 using TablesVM = BulkyBook.Models.ViewModels.TablesVM;
 
 namespace BulkyBookWeb.Areas.Admin.Controllers {
@@ -33,12 +34,14 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
                 case SD.Fines:
                 {
                     var fines = User.IsInRole(SD.Role_Admin) 
-                        ? _unitOfWork.Fine.GetAll(includeProperties:"ApplicationUser,Product").ToList() 
-                        : _unitOfWork.Fine.GetAll(f => f.ApplicationUserId == userId, includeProperties:"Product").ToList();
+                        ? _unitOfWork.Fine.GetAll(f => f.Status == SD.PendingFine, includeProperties:"ApplicationUser,Product").ToList() 
+                        : _unitOfWork.Fine.GetAll(f => f.ApplicationUserId == userId && 
+                            f.Status == SD.PendingFine, includeProperties:"Product").ToList();
                     tableVm = new TablesVM
                     {
                         FinesList = fines,
-                        RequestedData = SD.Fines
+                        RequestedData = SD.Fines,
+                        IsFines = true
                     };
                     return View(tableVm);    
                 }
@@ -70,11 +73,140 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
             }
         }
 
-        public void Pay()
-        {    
-            // Payment goes here
+        public IActionResult PayFineConfirmation(int opId, int? fineId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            List<Fine> fines = [];
+            if (fineId is null)
+            {
+                fines.AddRange(_unitOfWork.Fine.GetAll(
+                    f => f.ApplicationUserId == userId && f.Status == SD.PendingFine,
+                    includeProperties:"Product"));
+            }
+            else
+            {
+                fines.Add(_unitOfWork.Fine.Get(
+                    f => f.ApplicationUserId == userId && f.Id == fineId && f.Status == SD.PendingFine
+                    ,includeProperties:"Product"));
+            }
+            foreach (var fine in fines)
+            {
+                fine.Status = SD.PayedFine;
+            }
+            _unitOfWork.Save();
+            return View(opId);
         }
 
+        public IActionResult PayFineSummery(int? fineId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var user = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
+            List<Fine> fines = [];
+            if (fineId is null)
+            {
+                fines.AddRange(_unitOfWork.Fine.GetAll(
+                    f => f.ApplicationUserId == userId && f.Status == SD.PendingFine,
+                     includeProperties:"Product"));
+            }
+            else
+            {
+                fines.Add(_unitOfWork.Fine.Get(
+                    f => f.ApplicationUserId == userId && f.Id == fineId && f.Status == SD.PendingFine
+                    ,includeProperties:"Product"));
+            }
+
+            var orderHeader = new OrderHeader
+            {
+                Name = user.Name,
+                PhoneNumber = user.PhoneNumber ?? "",
+                StreetAddress = user.StreetAddress ?? "",
+                City = user.City ?? "",
+                State = user.State ?? "",
+                PostalCode = user.PostalCode ?? "",
+                OrderTotal = fines.Sum(f => f.Amount)
+            };
+
+            var fineVm = new FineVm
+            {
+                Fines = fines,
+                OrderHeader = orderHeader,  
+                FineId = fineId 
+            };
+            return View(fineVm);
+        }
+        
+        [HttpPost]
+        [ActionName("PayFineSummery")]
+        public IActionResult PayFine(FineVm fineVm)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            List<Fine> fines = [];
+            if (fineVm.FineId is null)
+            {
+                fines.AddRange(_unitOfWork.Fine.GetAll(
+                    f => f.ApplicationUserId == userId && f.Status == SD.PendingFine,
+                    includeProperties:"Product"));
+            }
+            else
+            {
+                fines.Add(_unitOfWork.Fine.Get(
+                    f => f.ApplicationUserId == userId && f.Id == fineVm.FineId && f.Status == SD.PendingFine
+                    ,includeProperties:"Product"));
+            }
+
+            fineVm.OrderHeader.ApplicationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            fineVm.OrderHeader.OrderDate = DateTime.UtcNow;
+            fineVm.OrderHeader.PaymentStatus = SD.PaymentStatusApproved;
+            fineVm.OrderHeader.OrderStatus = SD.StatusApproved;
+            
+            _unitOfWork.OrderHeader.Add(fineVm.OrderHeader);
+            _unitOfWork.Save();
+            
+            foreach (var fine in fines)
+            {
+                var orderDetail = new OrderDetail {
+                    ProductId = fine.ProductId,
+                    OrderHeaderId = fineVm.OrderHeader.Id,
+                    Price = fine.Amount,
+                    Count = 1, 
+                    Type = fine.Type, 
+                };
+                _unitOfWork.OrderDetail.Add(orderDetail);
+            }
+            _unitOfWork.Save();
+
+            var domain = Request.Scheme+ "://"+ Request.Host.Value +"/";
+            var options = new SessionCreateOptions {
+                SuccessUrl = domain+ $"admin/order/PayFineConfirmation?opId={fineVm.OrderHeader.Id}&fineId={fineVm.FineId}",
+                CancelUrl = domain+$"admin/order/index?requestedData={SD.Fines}",
+                LineItems = new List<SessionLineItemOptions>(),
+                Mode = "payment",
+            };
+            
+            foreach (var fine in fines)
+            {
+                var sessionLineItem = new SessionLineItemOptions {
+                    PriceData = new SessionLineItemPriceDataOptions {
+                        UnitAmount = (long)(fine.Amount * 100) , // $20.50 => 2050
+                        Currency = "usd",
+                        ProductData = new SessionLineItemPriceDataProductDataOptions {
+                            Name = fine.Product!.Title
+                        }
+                    },
+                    Quantity = 1
+                };
+                options.LineItems.Add(sessionLineItem);
+            }
+
+            var service = new SessionService();
+            var session = service.Create(options); 
+            
+            _unitOfWork.OrderHeader.UpdateStripePaymentID(fineVm.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            _unitOfWork.Save();
+            Response.Headers.Append("Location", session.Url);
+            return new StatusCodeResult(303);
+        }
+        
         public IActionResult Details(int orderId) {
             OrderVM = new() {
                 OrderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == orderId, includeProperties: "ApplicationUser"),

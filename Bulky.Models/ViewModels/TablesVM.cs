@@ -7,4 +7,5 @@ public class TablesVM
     public List<WishItem> WishItemsList { get; set; }
 
     public string RequestedData { get; set; }
+    public bool IsFines { get; set; }
 }

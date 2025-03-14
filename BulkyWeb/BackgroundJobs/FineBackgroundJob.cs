@@ -36,18 +36,16 @@ public void CheckDelayReturns()
         var userId = delayedUser.OrderHeader.ApplicationUserId;
         var productId = delayedUser.ProductId;
 
-        // Check if a fine was issued today
-        var hasFineToday = existingFines.Any(f => f.ApplicationUserId == userId &&
-                                                 f.ProductId == productId &&
-                                                 f.IssuedDate == today);
-        if (hasFineToday) continue;
 
         // Check for an existing fine from a previous day
-        var existingFine = existingFines.FirstOrDefault(f => f.ApplicationUserId == userId &&
-                                                            f.ProductId == productId &&
-                                                            f.IssuedDate != today);
+        var existingFine = existingFines.FirstOrDefault(f => f.OrderDetailsId == delayedUser.Id);
         if (existingFine is not null)
         {
+            // Check if a fine was issued today
+            var hasFineToday = existingFines.Any(f => f.ApplicationUserId == userId &&
+                                                      f.ProductId == productId &&
+                                                      f.IssuedDate == today);
+            if (hasFineToday) continue;
             existingFine.Amount += 0.250; // Update existing fine
             continue;
         }
@@ -63,7 +61,8 @@ public void CheckDelayReturns()
             ProductId = productId,
             Amount = amount,
             IssuedDate = today,
-            Type = SD.Delay
+            Type = SD.Delay,
+            OrderDetailsId = delayedUser.Id
         });
     }
 

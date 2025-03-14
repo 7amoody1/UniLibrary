@@ -18,4 +18,7 @@ public class Fine
     public DateTime IssuedDate { get; set; } = DateTime.Now;
 
     public string Type { get; set; }  // delay, corrupted 
+
+    public string Status { get; set; } = "pending";
+    public int OrderDetailsId { get; set; }
 }

@@ -119,8 +119,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
                     EndBorrowDate = cart.EndBorrowDate
                 };
                 _unitOfWork.OrderDetail.Add(orderDetail);
-                _unitOfWork.Save();
             }
+            _unitOfWork.Save();
 
 			if (applicationUser.CompanyId.GetValueOrDefault() == 0) {
                 //it is a regular customer account and we need to capture payment
@@ -149,7 +149,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
 
 				var service = new SessionService();
-				Session session = service.Create(options);
+				Session session = service.Create(options);  
                 _unitOfWork.OrderHeader.UpdateStripePaymentID(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
                 _unitOfWork.Save();
                 Response.Headers.Add("Location", session.Url);

@@ -11,24 +11,32 @@
     <div class="card-body p-4">
         <div class="d-flex justify-content-between pb-5 pt-2">
             <span></span>
+            @if (Model.IsFines)
+            {
+                <a class="me-auto btn btn-success"
+                   asp-controller="Order"
+                   asp-action="PayFineSummery">
+                    Pay All Fines 
+                </a>
+            }
             <ul class="list-group list-group-horizontal-sm">
-                <a class="text-decoration-none" 
-                   asp-controller="Order" 
+                <a class="text-decoration-none"
+                   asp-controller="Order"
                    asp-action="Index"
                    asp-route-requestedData="@SD.Fines">
-                <li class="list-group-item">Fines</li>
-                </a>
-                <a class="text-decoration-none" 
-                   asp-controller="Order" 
-                   asp-action="Index" 
-                   asp-route-requestedData="@SD.Orders">
-                <li class="list-group-item">Orders</li>
+                    <li class="list-group-item">Fines</li>
                 </a>
                 <a class="text-decoration-none"
-                   asp-controller="Order" 
+                   asp-controller="Order"
+                   asp-action="Index"
+                   asp-route-requestedData="@SD.Orders">
+                    <li class="list-group-item">Orders</li>
+                </a>
+                <a class="text-decoration-none"
+                   asp-controller="Order"
                    asp-action="Index"
                    asp-route-requestedData="@SD.WishItems">
-                <li class="list-group-item">Wish list</li>
+                    <li class="list-group-item">Wish list</li>
                 </a>
             </ul>
         </div>
@@ -64,7 +72,7 @@
                             @if (!User.IsInRole(SD.Role_Admin))
                             {
                                 <td>
-                                    <button class="btn btn-primary" type="button">Pay</button>
+                                    <a class="btn btn-primary" asp-action="PayFineSummery" asp-route-fineId="@fines.Id">Pay</a>
                                 </td>
                             }
                             

@@ -34,6 +34,10 @@ namespace BulkyBook.Utility
 		public const string Fines = "Fines";
 		public const string Orders = "Orders";
 		public const string WishItems = "WishItems";
+		public const string PendingFine = "pending";
+		public const string PayedFine = "payed";
+		
+		
 		
         public const string SessionCart = "SessionShoppingCart";
 
