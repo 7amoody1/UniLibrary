@@ -27,6 +27,7 @@ namespace BulkyBook.DataAccess.Repository
             {
                 objFromDb.Title = obj.Title;
                 objFromDb.ISBN = obj.ISBN;
+                objFromDb.QuantityInStock = obj.QuantityInStock;
                 objFromDb.Price = obj.Price;
                 objFromDb.Price50 = obj.Price50;
                 objFromDb.ListPrice = obj.ListPrice;

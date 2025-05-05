@@ -4,6 +4,7 @@ using BulkyBook.DataAcess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BulkyBook.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250505162022_AddAmountInProduct")]
+    partial class AddAmountInProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -294,6 +297,9 @@ namespace BulkyBook.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -321,9 +327,6 @@ namespace BulkyBook.DataAccess.Migrations
                     b.Property<double>("Price50")
                         .HasColumnType("float");
 
-                    b.Property<int>("QuantityInStock")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -338,6 +341,7 @@ namespace BulkyBook.DataAccess.Migrations
                         new
                         {
                             Id = 1,
+                            Amount = 0,
                             Author = "Billy Spark",
                             CategoryId = 1,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -346,12 +350,12 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 90.0,
                             Price100 = 80.0,
                             Price50 = 85.0,
-                            QuantityInStock = 0,
                             Title = "Fortune of Time"
                         },
                         new
                         {
                             Id = 2,
+                            Amount = 0,
                             Author = "Nancy Hoover",
                             CategoryId = 1,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -360,12 +364,12 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 30.0,
                             Price100 = 20.0,
                             Price50 = 25.0,
-                            QuantityInStock = 0,
                             Title = "Dark Skies"
                         },
                         new
                         {
                             Id = 3,
+                            Amount = 0,
                             Author = "Julian Button",
                             CategoryId = 1,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -374,12 +378,12 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 50.0,
                             Price100 = 35.0,
                             Price50 = 40.0,
-                            QuantityInStock = 0,
                             Title = "Vanish in the Sunset"
                         },
                         new
                         {
                             Id = 4,
+                            Amount = 0,
                             Author = "Abby Muscles",
                             CategoryId = 2,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -388,12 +392,12 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 65.0,
                             Price100 = 55.0,
                             Price50 = 60.0,
-                            QuantityInStock = 0,
                             Title = "Cotton Candy"
                         },
                         new
                         {
                             Id = 5,
+                            Amount = 0,
                             Author = "Ron Parker",
                             CategoryId = 2,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -402,12 +406,12 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 27.0,
                             Price100 = 20.0,
                             Price50 = 25.0,
-                            QuantityInStock = 0,
                             Title = "Rock in the Ocean"
                         },
                         new
                         {
                             Id = 6,
+                            Amount = 0,
                             Author = "Laura Phantom",
                             CategoryId = 3,
                             Description = "Praesent vitae sodales libero. Praesent molestie orci augue, vitae euismod velit sollicitudin ac. Praesent vestibulum facilisis nibh ut ultricies.\r\n\r\nNunc malesuada viverra ipsum sit amet tincidunt. ",
@@ -416,7 +420,6 @@ namespace BulkyBook.DataAccess.Migrations
                             Price = 23.0,
                             Price100 = 20.0,
                             Price50 = 22.0,
-                            QuantityInStock = 0,
                             Title = "Leaves and Wonders"
                         });
                 });

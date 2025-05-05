@@ -10,6 +10,7 @@ function loadDataTable() {
         "columns": [
             { data: 'title', "width": "25%" },
             { data: 'isbn', "width": "15%" },
+            { data: 'quantityInStock', "width": "15%" },
             { data: 'listPrice', "width": "10%" },
             { data: 'author', "width": "15%" },
             { data: 'category.name', "width": "10%" },

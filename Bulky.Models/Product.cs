@@ -27,11 +27,14 @@ namespace BulkyBook.Models
         public double ListPrice { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue)]
+        public int QuantityInStock { get; set; }
+        
+        [Required]
         [Display(Name = "Price for 1-50")]
         [Range(1, 1000)]
         public double Price { get; set; }
-
-
+        
         [Required]
         [Display(Name = "Price for 50+")]
         [Range(1, 1000)]

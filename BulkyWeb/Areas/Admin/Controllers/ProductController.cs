@@ -100,12 +100,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
                     _unitOfWork.Product.Update(productVM.Product);
                     _unitOfWork.Save();
 
-
-
-
                 }
-
-                
                 TempData["success"] = "Product created/updated successfully";
                 return RedirectToAction("Index");
             }
@@ -119,7 +114,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
                 return View(productVM);
             }
         }
-
+ 
 
         public IActionResult DeleteImage(int imageId) {
             var imageToBeDeleted = _unitOfWork.ProductImage.Get(u => u.Id == imageId);

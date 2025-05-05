@@ -12,7 +12,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
     [Area("customer")]
     [Authorize]
-    public class CartController : Controller {
+    public class CartController : Controller
+    {
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailSender _emailSender;
@@ -24,8 +25,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
         }
 
 
-        public IActionResult Index() {
-
+        public IActionResult Index(bool error) {
+        
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
 
@@ -45,6 +46,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
                 ShoppingCartVM.OrderHeader.OrderTotal += cart.Price * cart.Count;
             }
 
+            if (error)
+                ModelState.AddModelError("", "Quantity In Stock Exceeded");
             return View(ShoppingCartVM);
         }
 
@@ -91,7 +94,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 			ApplicationUser applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId);
 
 
-			foreach (var cart in ShoppingCartVM.ShoppingCartList) {
+            var shoppingCartList = ShoppingCartVM.ShoppingCartList.ToList();
+            foreach (var cart in shoppingCartList) {
 				cart.Price = GetPriceBasedOnQuantity(cart);
 				ShoppingCartVM.OrderHeader.OrderTotal += (cart.Price * cart.Count);
 			}
@@ -108,7 +112,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 			}
 			_unitOfWork.OrderHeader.Add(ShoppingCartVM.OrderHeader);
 			_unitOfWork.Save();
-            foreach(var cart in ShoppingCartVM.ShoppingCartList) {
+            foreach(var cart in shoppingCartList) {
                 OrderDetail orderDetail = new() {
                     ProductId = cart.ProductId,
                     OrderHeaderId = ShoppingCartVM.OrderHeader.Id,
@@ -133,7 +137,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 					Mode = "payment",
 				};
 
-                foreach(var item in ShoppingCartVM.ShoppingCartList) {
+                foreach(var item in shoppingCartList) {
                     var sessionLineItem = new SessionLineItemOptions {
                         PriceData = new SessionLineItemPriceDataOptions {
                             UnitAmount = (long)(item.Price * 100), // $20.50 => 2050
@@ -153,6 +157,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
                 _unitOfWork.OrderHeader.UpdateStripePaymentID(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
                 _unitOfWork.Save();
                 Response.Headers.Add("Location", session.Url);
+               ;
                 return new StatusCodeResult(303);
 
 			}
@@ -166,7 +171,6 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 			OrderHeader orderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == id, includeProperties: "ApplicationUser");
             if(orderHeader.PaymentStatus!= SD.PaymentStatusDelayedPayment) {
                 //this is an order by customer
-
                 var service = new SessionService();
                 Session session = service.Get(orderHeader.SessionId);
 
@@ -184,7 +188,11 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
             List<ShoppingCart> shoppingCarts = _unitOfWork.ShoppingCart
                 .GetAll(u => u.ApplicationUserId == orderHeader.ApplicationUserId).ToList();
-
+            foreach (var item in shoppingCarts)
+            {
+                var product = _unitOfWork.Product.Get(x => x.Id == item.ProductId, tracked: true);
+                product.QuantityInStock -= item.Count;
+            }
             _unitOfWork.ShoppingCart.RemoveRange(shoppingCarts);
             _unitOfWork.Save();
 
@@ -194,6 +202,11 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 
 		public IActionResult Plus(int cartId) {
             var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
+            var product = _unitOfWork.Product.Get(x => x.Id == cartFromDb.ProductId);
+            if (cartFromDb.Count + 1 > product.QuantityInStock)
+            {
+                return RedirectToAction(nameof(Index), new { error = true });
+            }
             cartFromDb.Count += 1;
             _unitOfWork.ShoppingCart.Update(cartFromDb);
             _unitOfWork.Save();
