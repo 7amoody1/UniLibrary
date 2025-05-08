@@ -26,7 +26,7 @@ public class HomeController : Controller
         return View(productList);
     }
 
-    public IActionResult Details(int productId)
+    public IActionResult Details(int productId, bool error)
     {
         ShoppingCart cart = new()
         {
@@ -34,6 +34,8 @@ public class HomeController : Controller
             Count = 1,
             ProductId = productId
         };
+        if (error)
+            ModelState.AddModelError("", "Quantity In Stock Exceeded");
         return View(cart);
     }
 
@@ -41,7 +43,7 @@ public class HomeController : Controller
     [Authorize]
     public IActionResult Details(ShoppingCart shoppingCart)
     {
-        if (shoppingCart.Type == "Borrow")
+        /*if (shoppingCart.Type == "Borrow")
         {
             var isConflict = _unitOfWork.OrderDetail
                 .GetAll(u => u.StartBorrowDate < shoppingCart.EndBorrowDate &&
@@ -60,6 +62,7 @@ public class HomeController : Controller
                 return View(cart);
             }
         }
+        */
 
         var claimsIdentity = (ClaimsIdentity)User.Identity;
         var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -68,6 +71,11 @@ public class HomeController : Controller
         var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.ApplicationUserId == userId &&
                                                            u.ProductId == shoppingCart.ProductId &&
                                                            u.Type == shoppingCart.Type);
+        var product = _unitOfWork.Product.Get(x => x.Id == shoppingCart.ProductId);
+        if (shoppingCart.Count + 1 > product.QuantityInStock)
+        {
+            return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId, error = true });
+        }
 
         if (cartFromDb is not null)
         {

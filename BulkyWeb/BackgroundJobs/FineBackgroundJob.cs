@@ -23,6 +23,8 @@ public void CheckDelayReturns()
             includeProperties: "OrderHeader.ApplicationUser,Product")
         .ToList();
 
+    delayedUsers.RemoveAll(x => x.IsReturned);
+     
     // Fetch all existing fines in one go
     var existingFines = _unitOfWork.Fine
         .GetAll(f => delayedUsers.Select(du => du.OrderHeader.ApplicationUserId).Contains(f.ApplicationUserId) &&

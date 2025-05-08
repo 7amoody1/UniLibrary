@@ -2,20 +2,20 @@
 using BulkyBook.Models;
 using BulkyBook.Models.ViewModels;
 using BulkyBook.Utility;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Stripe;
-using Stripe.Checkout;
-using System.Diagnostics;
-using System.Security.Claims;
-using Product = Stripe.Product;
-using TablesVM = BulkyBook.Models.ViewModels.TablesVM;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Mvc;
+    using Stripe;
+    using Stripe.Checkout;
+    using System.Diagnostics;
+    using System.Security.Claims;
+    using Product = Stripe.Product;
+    using TablesVM = BulkyBook.Models.ViewModels.TablesVM;
 
-namespace BulkyBookWeb.Areas.Admin.Controllers {
-	[Area("admin")]
-    [Authorize]
-	public class OrderController : Controller {
+    namespace BulkyBookWeb.Areas.Admin.Controllers {
+	    [Area("admin")]
+        [Authorize]
+	    public class OrderController : Controller {
 
 		private readonly IUnitOfWork _unitOfWork;
         [BindProperty]
@@ -202,6 +202,8 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
             var session = service.Create(options); 
             
             _unitOfWork.OrderHeader.UpdateStripePaymentID(fineVm.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            /*var fineFromDb = _unitOfWork.Fine.Get(x => x.Id == fineVm.FineId);
+            _unitOfWork.Fine.Remove(fineFromDb);*/
             _unitOfWork.Save();
             Response.Headers.Append("Location", session.Url);
             return new StatusCodeResult(303);
@@ -359,6 +361,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
             return View(orderHeaderId);
         }
 
+      
 
 
         #region API CALLS
@@ -402,6 +405,16 @@ namespace BulkyBookWeb.Areas.Admin.Controllers {
 
             return Json(new { data = objOrderHeaders });
 		}
+
+
+        [HttpPost]
+        public IActionResult OnCheckChange(int orderHeaderId, bool isReturned)
+        {
+            var orderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == orderHeaderId, tracked: true);
+            orderHeader.IsReturned = isReturned;
+            _unitOfWork.Save();
+            return Ok();
+        }
 
 
 		#endregion

@@ -11,7 +11,7 @@
     <div class="card-body p-4">
         <div class="d-flex justify-content-between pb-5 pt-2">
             <span></span>
-            @if (Model.IsFines)
+            @if (Model.IsFines && !User.IsInRole(SD.Role_Admin))
             {
                 <a class="me-auto btn btn-success"
                    asp-controller="Order"
@@ -32,12 +32,12 @@
                    asp-route-requestedData="@SD.Orders">
                     <li class="list-group-item">Orders</li>
                 </a>
-                <a class="text-decoration-none"
+                @*<a class="text-decoration-none"
                    asp-controller="Order"
                    asp-action="Index"
                    asp-route-requestedData="@SD.WishItems">
                     <li class="list-group-item">Wish list</li>
-                </a>
+                </a>*@
             </ul>
         </div>
         <table class="table table-bordered table-striped" style="width:100%">
@@ -50,7 +50,6 @@
                      }
                     <th>Product Name</th>
                     <th>Amount</th>
-                    <th>Issued Date</th>
                     <th>Type</th>
                     @if (!User.IsInRole(SD.Role_Admin))
                     {
@@ -67,7 +66,6 @@
                             }
                             <td>@fines.Product!.Title</td>
                             <td>@fines.Amount</td>
-                            <td>@fines.IssuedDate</td>
                             <td>@fines.Type</td>
                             @if (!User.IsInRole(SD.Role_Admin))
                             {
@@ -86,7 +84,6 @@
                     }
                     <th>Product Name</th>
                     <th>Amount</th>
-                    <th>Issued Date</th>
                     <th>Type</th>
                     @if (!User.IsInRole(SD.Role_Admin))
                     {
@@ -103,9 +100,13 @@
                          <th>Email</th>
                          <th>Phone Number</th>
                      }
+                     
                     <th>Date</th>
-                    <th>Status</th>
                     <th>Total</th>
+                    @if (User.IsInRole(SD.Role_Admin))
+                {
+                    <th>Returned</th>
+                }
                 </thead>
                 <tbody>
                     @foreach (var order in Model.OrderHeadersList)
@@ -118,8 +119,19 @@
                                 <td>@order.ApplicationUser.PhoneNumber</td>
                             }
                             <td>@order.PaymentDate</td>
-                            <td>@order.OrderStatus</td>
                             <td>@order.OrderTotal</td>
+                            @if (User.IsInRole(SD.Role_Admin))
+                            {
+
+                                <td class="text-center">
+                                    <input id="orderHeaderId" value="@order.Id" hidden>
+                                    <input
+                                        onclick="handleCheck(this, @order.Id)"
+                                        class="form-check-input returned-checkbox"
+                                        type="checkbox"
+                                        checked="@order.IsReturned">
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -131,8 +143,12 @@
                         <th>Phone Number</th>
                     }
                     <th>Date</th>
-                    <th>Status</th>
                     <th>Total</th>
+                    @if (User.IsInRole(SD.Role_Admin))
+                {
+
+                    <th>Returned</th>
+                }
                 </tfoot>
             }
             @if (Model.RequestedData == SD.WishItems)
@@ -180,4 +196,44 @@
 
 @section Scripts{
     <script src="~/js/order.js"></script>
+
+    <script>
+        $('.table').DataTable({
+            paging: true, // Enable pagination
+            pageLength: 10, // Number of rows per page
+            searching: true, // Enable search
+            ordering: true, // Enable sorting
+            columnDefs: [
+                { orderable: false, targets: -1 } // Disable sorting on Action column
+            ],
+            language: {
+                search: "Filter records:", // Customize search placeholder
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
+            }
+        });
+
+        function handleCheck(checkbox, orderHeaderId) {
+            const isReturned = checkbox.checked;
+            $.ajax({
+                url: '/admin/Order/OnCheckChange',
+                type: 'POST',
+                data: {
+                    orderHeaderId: orderHeaderId,
+                    isReturned: isReturned
+                },
+                success: function () {
+                    console.log("Status updated.");
+                },
+                error: function () {
+                    alert("Error updating status.");
+                }
+            });
+        }
+
+    </script>
 }
