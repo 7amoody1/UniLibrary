@@ -43,26 +43,6 @@ public class HomeController : Controller
     [Authorize]
     public IActionResult Details(ShoppingCart shoppingCart)
     {
-        /*if (shoppingCart.Type == "Borrow")
-        {
-            var isConflict = _unitOfWork.OrderDetail
-                .GetAll(u => u.StartBorrowDate < shoppingCart.EndBorrowDate &&
-                             u.EndBorrowDate > shoppingCart.StartBorrowDate && u.ProductId == shoppingCart.ProductId)
-                .Any();
-
-            if (isConflict)
-            {
-                ModelState.AddModelError(string.Empty, "This period is already occupied");
-                ShoppingCart cart = new()
-                {
-                    Product = _unitOfWork.Product.Get(u => u.Id == shoppingCart.ProductId, "Category,ProductImages"),
-                    Count = shoppingCart.Count,
-                    ProductId = shoppingCart.ProductId
-                };
-                return View(cart);
-            }
-        }
-        */
 
         var claimsIdentity = (ClaimsIdentity)User.Identity;
         var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -74,7 +54,7 @@ public class HomeController : Controller
         var product = _unitOfWork.Product.Get(x => x.Id == shoppingCart.ProductId);
         if (shoppingCart.Count + 1 > product.QuantityInStock)
         {
-            return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId, error = true });
+            return RedirectToAction(nameof(Index), new { productId = shoppingCart.ProductId, error = true });
         }
 
         if (cartFromDb is not null)

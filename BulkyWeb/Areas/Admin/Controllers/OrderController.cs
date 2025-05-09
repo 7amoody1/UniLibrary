@@ -47,13 +47,13 @@ using BulkyBook.Utility;
                 }
                 case SD.Orders:
                 {
-                    var orderHeaders = User.IsInRole(SD.Role_Admin)
-                     ? _unitOfWork.OrderHeader.GetAll(includeProperties:"ApplicationUser").ToList() 
-                     : _unitOfWork.OrderHeader.GetAll(f => f.ApplicationUserId == userId).ToList();
+                    var orderDetails = User.IsInRole(SD.Role_Admin)
+                        ? _unitOfWork.OrderDetail.GetOrderDetailsWithHeaders()
+                        : _unitOfWork.OrderDetail.GetOrderDetailsWithHeaders(userId);
 
                     tableVm = new TablesVM
                     {
-                        OrderHeadersList = orderHeaders,
+                        OrderDetailsList = orderDetails,
                         RequestedData = SD.Orders
                     };
                     return View(tableVm);
@@ -81,13 +81,13 @@ using BulkyBook.Utility;
             {
                 fines.AddRange(_unitOfWork.Fine.GetAll(
                     f => f.ApplicationUserId == userId && f.Status == SD.PendingFine,
-                    includeProperties:"Product"));
+                    includeProperties:"Product", tracked: true));
             }
             else
             {
                 fines.Add(_unitOfWork.Fine.Get(
                     f => f.ApplicationUserId == userId && f.Id == fineId && f.Status == SD.PendingFine
-                    ,includeProperties:"Product"));
+                    ,includeProperties:"Product", tracked: true));
             }
             foreach (var fine in fines)
             {
@@ -408,9 +408,9 @@ using BulkyBook.Utility;
 
 
         [HttpPost]
-        public IActionResult OnCheckChange(int orderHeaderId, bool isReturned)
+        public IActionResult OnCheckChange(int orderDetailsId, bool isReturned)
         {
-            var orderHeader = _unitOfWork.OrderHeader.Get(u => u.Id == orderHeaderId, tracked: true);
+            var orderHeader = _unitOfWork.OrderDetail.Get(u => u.Id == orderDetailsId, tracked: true);
             orderHeader.IsReturned = isReturned;
             _unitOfWork.Save();
             return Ok();

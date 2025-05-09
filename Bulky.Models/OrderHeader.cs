@@ -32,13 +32,12 @@ namespace BulkyBook.Models {
         public string StreetAddress { get; set; }
         [Required]
         public string City { get; set; }
-        [Required]
-        public string State { get; set; }
-        [Required]
-        public string PostalCode { get; set; }
+        public string? State { get; set; }
+        public string? PostalCode { get; set; }
         [Required]
         public string Name { get; set; }
-
-
+        
+        [NotMapped]
+         public OrderDetail? OrderDetail { get; set; }
     }
 }

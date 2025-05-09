@@ -94,6 +94,7 @@
             @if (Model.RequestedData == SD.Orders)
             {
                 <thead>
+                    <th>Id</th>
                     @if (User.IsInRole(SD.Role_Admin))
                      {
                          <th>Username</th>
@@ -101,6 +102,8 @@
                          <th>Phone Number</th>
                      }
                      
+                    <th>Product Name</th>
+                    <th>Type</th>
                     <th>Date</th>
                     <th>Total</th>
                     @if (User.IsInRole(SD.Role_Admin))
@@ -109,22 +112,24 @@
                 }
                 </thead>
                 <tbody>
-                    @foreach (var order in Model.OrderHeadersList)
+                    @foreach (var order in Model.OrderDetailsList)
                     {
                         <tr>
+                            <td>@order.Id</td>
                             @if (User.IsInRole(SD.Role_Admin))
                             {
-                                <td>@order.ApplicationUser.Name</td>
-                                <td>@order.ApplicationUser.Email</td>
-                                <td>@order.ApplicationUser.PhoneNumber</td>
+                                <td>@order.OrderHeader.ApplicationUser.Name</td>
+                                <td>@order.OrderHeader.ApplicationUser</td>
+                                <td>@order.OrderHeader.ApplicationUser.PhoneNumber</td>
                             }
-                            <td>@order.PaymentDate</td>
-                            <td>@order.OrderTotal</td>
-                            @if (User.IsInRole(SD.Role_Admin))
+                            <td>@order.Product.Title</td>
+                            <td>@order.Type</td>
+                            <td>@order.OrderHeader.PaymentDate</td>
+                            <td>@order.OrderHeader.OrderTotal</td>
+                            @if (User.IsInRole(SD.Role_Admin) && order.Type == SD.Borrow)
                             {
 
                                 <td class="text-center">
-                                    <input id="orderHeaderId" value="@order.Id" hidden>
                                     <input
                                         onclick="handleCheck(this, @order.Id)"
                                         class="form-check-input returned-checkbox"
@@ -136,12 +141,15 @@
                     }
                 </tbody>
                 <tfoot>
+                    <th>Id</th>
                     @if (User.IsInRole(SD.Role_Admin))
                     {
                         <th>Username</th>
                         <th>Email</th>
                         <th>Phone Number</th>
                     }
+                    <th>Product Name</th>
+                    <th>Type</th>
                     <th>Date</th>
                     <th>Total</th>
                     @if (User.IsInRole(SD.Role_Admin))
@@ -217,13 +225,13 @@
             }
         });
 
-        function handleCheck(checkbox, orderHeaderId) {
+        function handleCheck(checkbox, orderDetailsId) {
             const isReturned = checkbox.checked;
             $.ajax({
                 url: '/admin/Order/OnCheckChange',
                 type: 'POST',
                 data: {
-                    orderHeaderId: orderHeaderId,
+                    orderDetailsId: orderDetailsId,
                     isReturned: isReturned
                 },
                 success: function () {

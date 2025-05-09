@@ -12,67 +12,73 @@ public class FineBackgroundJob
     {
         _unitOfWork = unitOfWork;
     }
-    
-public void CheckDelayReturns()
-{
-    var today = DateTime.Now.Date; // Normalize to midnight for consistency
 
-    // Fetch all delayed users in one query
-    var delayedUsers = _unitOfWork.OrderDetail
-        .GetAll(o => !o.IsReturned && o.Type == SD.Borrow && today > o.EndBorrowDate,
-            includeProperties: "OrderHeader.ApplicationUser,Product")
-        .ToList();
-
-    delayedUsers.RemoveAll(x => x.IsReturned);
-     
-    // Fetch all existing fines in one go
-    var existingFines = _unitOfWork.Fine
-        .GetAll(f => delayedUsers.Select(du => du.OrderHeader.ApplicationUserId).Contains(f.ApplicationUserId) &&
-                     delayedUsers.Select(du => du.ProductId).Contains(f.ProductId))
-        .ToList();
-
-    var finesToAdd = new List<Fine>();
-
-    foreach (var delayedUser in delayedUsers)
+    public void CheckDelayReturns()
     {
-        var userId = delayedUser.OrderHeader.ApplicationUserId;
-        var productId = delayedUser.ProductId;
+        var today = DateTime.Now.Date; // Normalize to midnight for consistency
 
+        // Fetch all delayed users in one query
+        var ordersOfDelayedUsers = _unitOfWork.OrderDetail
+            .GetAll(o => o.Type == SD.Borrow && !o.IsReturned && today > o.EndBorrowDate,
+                includeProperties: "OrderHeader.ApplicationUser,Product")
+            .ToList();
 
-        // Check for an existing fine from a previous day
-        var existingFine = existingFines.FirstOrDefault(f => f.OrderDetailsId == delayedUser.Id);
-        if (existingFine is not null)
+        var existingFines = _unitOfWork.Fine.GetAll(
+            x => x.Status == SD.PendingFine, tracked: true).ToList();
+            
+        var payedFines = _unitOfWork.Fine.GetAll(
+            x => x.Status == SD.PayedFine, tracked: true).ToList();
+
+        var finesToAdd = new List<Fine>();
+        
+        foreach (var orderDetail in ordersOfDelayedUsers)
         {
-            // Check if a fine was issued today
-            var hasFineToday = existingFines.Any(f => f.ApplicationUserId == userId &&
-                                                      f.ProductId == productId &&
-                                                      f.IssuedDate == today);
-            if (hasFineToday) continue;
-            existingFine.Amount += 0.250; // Update existing fine
-            continue;
+            var userId = orderDetail.OrderHeader.ApplicationUserId;
+            var productId = orderDetail.ProductId;
+
+            var currentFines = existingFines.Where(x => x.OrderDetailsId == orderDetail.Id).ToList();
+            
+            if (currentFines.Any())
+            {
+                foreach (var currentFine in currentFines)
+                {
+                    currentFine.Amount += 0.250; // Update existing fine
+                }
+
+                continue;
+            }
+
+            var oldFines = payedFines.FirstOrDefault(x => x.OrderDetailsId == orderDetail.Id);
+
+            if (oldFines is not null)
+            {
+                oldFines.Amount = 0.250;
+                oldFines.Status = SD.PendingFine;
+                continue;
+            }
+            
+            // Calculate fine amount based on full timespan
+            var daysLate = (today - orderDetail.EndBorrowDate!.Value).TotalDays;
+            var amount = daysLate * 0.250;
+
+            // Create new fine
+            finesToAdd.Add(new Fine
+            {
+                ApplicationUserId = userId,
+                ProductId = productId,
+                Amount = amount,
+                IssuedDate = today,
+                Type = SD.Delay,
+                OrderDetailsId = orderDetail.Id
+            });
         }
 
-        // Calculate fine amount based on full timespan
-        var daysLate = (today - delayedUser.EndBorrowDate!.Value).TotalDays;
-        var amount = daysLate * 0.250;
-
-        // Create new fine
-        finesToAdd.Add(new Fine
+        // Batch insert new fines
+        if (finesToAdd.Any())
         {
-            ApplicationUserId = userId,
-            ProductId = productId,
-            Amount = amount,
-            IssuedDate = today,
-            Type = SD.Delay,
-            OrderDetailsId = delayedUser.Id
-        });
-    }
+            _unitOfWork.Fine.AddRange(finesToAdd);
+        }
 
-    // Batch insert new fines
-    if (finesToAdd.Any())
-    {
-        _unitOfWork.Fine.AddRange(finesToAdd);
+        _unitOfWork.Save();
     }
-
-    _unitOfWork.Save();
-}}
+}
