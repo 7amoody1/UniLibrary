@@ -1,13 +1,11 @@
 ﻿using BulkyBook.DataAccess.Repository.IRepository;
-using BulkyBook.DataAcess.Data;
 using BulkyBook.Models;
 using BulkyBook.Models.ViewModels;
 using BulkyBook.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
-using System.Data;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace BulkyBookWeb.Areas.Admin.Controllers
 {
@@ -17,10 +15,15 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        public ProductController(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
+        private readonly IEmailSender _emailSender;
+        public ProductController(
+            IUnitOfWork unitOfWork,
+            IWebHostEnvironment webHostEnvironment,
+            IEmailSender emailSender)
         {
             _unitOfWork = unitOfWork;
             _webHostEnvironment = webHostEnvironment;
+            _emailSender = emailSender;
         }
         public IActionResult Index() 
         {
@@ -54,7 +57,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
             
         }
         [HttpPost]
-        public IActionResult Upsert(ProductVM productVM, List<IFormFile> files)
+        public async Task<IActionResult> Upsert(ProductVM productVM, List<IFormFile> files)
         {
             if (ModelState.IsValid)
             {
@@ -101,6 +104,40 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
                     _unitOfWork.Save();
 
                 }
+
+                if (productVM.Product.QuantityInStock > 0)
+                {
+                    var wishItemsList = _unitOfWork.WishItem.GetByProductId(productVM.Product.Id);
+
+                    foreach (var wishItem in wishItemsList)
+                    {
+                        var user = _unitOfWork.ApplicationUser.Get(x => x.Id == wishItem.ApplicationUserId);
+                        if (user?.Email is not null)
+                        {
+                            await _emailSender.SendEmailAsync(
+                                user.Email,
+                                "Your Waited Books Are Back in Stock!",
+                                $"""
+                                 Dear {user.Name},
+
+                                 We’re excited to inform you that the following book(s) you’ve been waiting for are now back in stock:
+
+                                 - {wishItem.Product.Title} by {wishItem.Product.Author} (ISBN: {wishItem.Product.ISBN})
+
+                                 You can now borrow or purchase it from our website. Hurry, stock is limited!
+
+                                 [Click here to visit the product page]({Url.Action("Details", "Home", new { area = "Customer", productId = wishItem.Product.Id }, Request.Scheme)})
+
+                                 Thank you for your patience!
+                                 Best regards,
+                                 The BulkyBook Team
+
+                                 """
+                            );
+                        }
+                    }
+                }
+
                 TempData["success"] = "Product created/updated successfully";
                 return RedirectToAction("Index");
             }

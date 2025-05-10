@@ -111,8 +111,8 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
 
 
             public string? Role { get; set; }
-            [ValidateNever]
-            public IEnumerable<SelectListItem> RoleList { get; set; }
+            /*[ValidateNever]
+            public IEnumerable<SelectListItem> RoleList { get; set; }*/
 
             [Required]
             public string Name { get; set; }
@@ -122,6 +122,7 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
             public string? PostalCode { get; set; }
             public string? PhoneNumber { get; set; }
             public int? CompanyId { get; set; }
+            
             [ValidateNever]
             public IEnumerable<SelectListItem> CompanyList { get; set; }
 
@@ -132,7 +133,7 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
         {
            
 
-            Input = new() {
+            /*Input = new() {
                 RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem {
                     Text = i,
                     Value = i
@@ -141,7 +142,7 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
                     Text = i.Name,
                     Value = i.Id.ToString()
                 })
-            };
+            };*/
 
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();

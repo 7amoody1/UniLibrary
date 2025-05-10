@@ -61,8 +61,8 @@ using BulkyBook.Utility;
                 default:
                 {
                     var wishItems = User.IsInRole(SD.Role_Admin)
-                        ? _unitOfWork.WishItem.GetAll().ToList() 
-                        : _unitOfWork.WishItem.GetAll(f => f.ApplicationUserId == userId).ToList();
+                        ? _unitOfWork.WishItem.GetByProductId(includeNotified: true)
+                        : _unitOfWork.WishItem.GetByProductId(userId: userId, includeNotified: true);
                     tableVm = new TablesVM
                     {
                         WishItemsList = wishItems,

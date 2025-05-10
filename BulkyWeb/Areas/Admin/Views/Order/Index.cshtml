@@ -32,12 +32,12 @@
                    asp-route-requestedData="@SD.Orders">
                     <li class="list-group-item">Orders</li>
                 </a>
-                @*<a class="text-decoration-none"
+                <a class="text-decoration-none"
                    asp-controller="Order"
                    asp-action="Index"
                    asp-route-requestedData="@SD.WishItems">
                     <li class="list-group-item">Wish list</li>
-                </a>*@
+                </a>
             </ul>
         </div>
         <table class="table table-bordered table-striped" style="width:100%">
@@ -103,7 +103,6 @@
                      }
                      
                     <th>Product Name</th>
-                    <th>Type</th>
                     <th>Date</th>
                     <th>Total</th>
                     @if (User.IsInRole(SD.Role_Admin))
@@ -123,18 +122,20 @@
                                 <td>@order.OrderHeader.ApplicationUser.PhoneNumber</td>
                             }
                             <td>@order.Product.Title</td>
-                            <td>@order.Type</td>
                             <td>@order.OrderHeader.PaymentDate</td>
                             <td>@order.OrderHeader.OrderTotal</td>
-                            @if (User.IsInRole(SD.Role_Admin) && order.Type == SD.Borrow)
+                            @if (User.IsInRole(SD.Role_Admin))
                             {
 
                                 <td class="text-center">
-                                    <input
-                                        onclick="handleCheck(this, @order.Id)"
-                                        class="form-check-input returned-checkbox"
-                                        type="checkbox"
-                                        checked="@order.IsReturned">
+                                    @if (order.Type == SD.Borrow)
+                                    {
+                                        <input
+                                            onclick="handleCheck(this, @order.Id)"
+                                            class="form-check-input returned-checkbox"
+                                            type="checkbox"
+                                            checked="@order.IsReturned">
+                                    }
                                 </td>
                             }
                         </tr>
@@ -149,7 +150,6 @@
                         <th>Phone Number</th>
                     }
                     <th>Product Name</th>
-                    <th>Type</th>
                     <th>Date</th>
                     <th>Total</th>
                     @if (User.IsInRole(SD.Role_Admin))
@@ -167,22 +167,20 @@
                          <th>Username</th>
                      }
                     <th>Product Name</th>
-                    <th>Amount</th>
-                    <th>Issued Date</th>
-                    <th>Type</th>
+                    <th>Enrolled Day</th>
+                    <th>Status</th>
                 </thead>
                 <tbody>
-                    @foreach (var fines in Model.FinesList)
+                    @foreach (var wishItem in Model.WishItemsList)
                     {
                         <tr>
                             @if (User.IsInRole(SD.Role_Admin))
                             {
-                                <td>@fines.ApplicationUser!.Name</td>
+                                <td>@wishItem.ApplicationUser.Name</td>
                             }
-                            <td>@fines.Product!.Title</td>
-                            <td>@fines.Amount</td>
-                            <td>@fines.IssuedDate</td>
-                            <td>@fines.Type</td>
+                            <td>@wishItem.Product.Title</td>
+                            <td>@wishItem.EnrolledDate</td>
+                            <td>@(wishItem.IsNotified ? "Notified" : "Pending")</td>
                         </tr>
                     }
                 </tbody>
@@ -192,9 +190,8 @@
                         <th>Username</th>
                     }
                     <th>Product Name</th>
-                    <th>Amount</th>
-                    <th>Issued Date</th>
-                    <th>Type</th>
+                    <th>Enrolled Day</th>
+                    <th>Status</th>
                 </tfoot>
             }
         </table>

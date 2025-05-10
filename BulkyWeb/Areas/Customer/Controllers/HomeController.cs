@@ -23,10 +23,44 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         IEnumerable<Product> productList = _unitOfWork.Product.GetAll(includeProperties: "Category,ProductImages");
+        ViewBag.Categories = _unitOfWork.Category.GetAll().ToList(); // For category filter dropdown
         return View(productList);
     }
 
-    public IActionResult Details(int productId, bool error)
+    [HttpGet]
+    public IActionResult GetProducts(string searchTerm, int? categoryId, string sortOption)
+    {
+        var products = _unitOfWork.Product.GetAll(includeProperties: "Category,ProductImages").AsQueryable();
+
+        // Search by title or author
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+            products = products.Where(p => p.Title.ToLower().Contains(searchTerm) || p.Author.ToLower().Contains(searchTerm));
+        }
+
+        // Filter by category
+        if (categoryId.HasValue && categoryId > 0)
+        {
+            products = products.Where(p => p.CategoryId == categoryId.Value);
+        }
+
+        // Sort
+        products = sortOption switch
+        {
+            "title-asc" => products.OrderBy(p => p.Title),
+            "title-desc" => products.OrderByDescending(p => p.Title),
+            "price-asc" => products.OrderBy(p => p.Price),
+            "price-desc" => products.OrderByDescending(p => p.Price),
+            "stock-asc" => products.OrderBy(p => p.QuantityInStock),
+            "stock-desc" => products.OrderByDescending(p => p.QuantityInStock),
+            _ => products.OrderBy(p => p.Title)
+        };
+
+        return PartialView("Products", products.ToList());
+    }
+
+    public IActionResult Details(int productId, bool error = false)
     {
         ShoppingCart cart = new()
         {
@@ -43,7 +77,6 @@ public class HomeController : Controller
     [Authorize]
     public IActionResult Details(ShoppingCart shoppingCart)
     {
-
         var claimsIdentity = (ClaimsIdentity)User.Identity;
         var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
         shoppingCart.ApplicationUserId = userId;
@@ -52,21 +85,19 @@ public class HomeController : Controller
                                                            u.ProductId == shoppingCart.ProductId &&
                                                            u.Type == shoppingCart.Type);
         var product = _unitOfWork.Product.Get(x => x.Id == shoppingCart.ProductId);
-        if (shoppingCart.Count + 1 > product.QuantityInStock)
+        if (shoppingCart.Count > product.QuantityInStock)
         {
-            return RedirectToAction(nameof(Index), new { productId = shoppingCart.ProductId, error = true });
+            return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId, error = true });
         }
 
         if (cartFromDb is not null)
         {
-            //shopping cart exists
             cartFromDb.Count += shoppingCart.Count;
             _unitOfWork.ShoppingCart.Update(cartFromDb);
             _unitOfWork.Save();
         }
         else
         {
-            //add cart record
             _unitOfWork.ShoppingCart.Add(shoppingCart);
             _unitOfWork.Save();
             HttpContext.Session.SetInt32(SD.SessionCart,
@@ -75,6 +106,55 @@ public class HomeController : Controller
 
         TempData["success"] = "Cart updated successfully";
         return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize]
+    public IActionResult JoinWaitList(int productId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (userId is null)
+        {
+            TempData["error"] = "User not found.";
+            return RedirectToAction(nameof(Details), new { productId });
+        }
+        
+        var product = _unitOfWork.Product.Get(u => u.Id == productId);
+        
+        if (product is null)
+        {
+            TempData["error"] = "Product not found.";
+            return RedirectToAction(nameof(Details), new { productId });
+        }
+
+        if (product.QuantityInStock > 0)
+        {
+            TempData["error"] = "This book is in stock. No need to join the wait list.";
+            return RedirectToAction(nameof(Details), new { productId });
+        }
+
+        var existingEntry = _unitOfWork.WishItem.Get(
+            w => w.ApplicationUserId == userId && w.ProductId == productId && !w.IsNotified);
+
+        if (existingEntry is not null)
+        {
+            TempData["error"] = "You are already on the wait list for this book.";
+            return RedirectToAction(nameof(Details), new { productId });
+        }
+
+        var waitListEntry = new WishItem
+        {
+            ApplicationUserId = userId,
+            ProductId = productId,
+            EnrolledDate = DateTime.Now,
+            IsNotified = false
+        };
+
+        _unitOfWork.WishItem.Add(waitListEntry);
+        _unitOfWork.Save();
+
+        TempData["success"] = "You have been added to the wait list. We'll notify you when the book is available.";
+        return RedirectToAction(nameof(Details), new { productId });
     }
 
     public IActionResult Privacy()

@@ -1,50 +1,166 @@
 ﻿@model IEnumerable<Product>
 
-<div class="row pb-3">
-    @foreach (var product in Model)
-    {
-        <div class="col-lg-3 col-sm-6">
-            <div class="row p-2">
-                <div class="col-12 p-1">
-                    <div class="card border-0 p-3 shadow  border-top border-5 rounded"> 
-                        @if(product.ProductImages is not null && product.ProductImages.Count() > 0) {
-                            <img src="@product.ProductImages.FirstOrDefault().ImageUrl" class="card-img-top rounded" />
-                        }
-                        else {
-                            <img src="https://placehold.co/500x600/png" class="card-img-top rounded" />
-                        }
-                        
-                        <div class="card-body pb-0">
-                            <div class="pl-1">
-                                <p class="card-title h5 text-dark opacity-75 text-uppercase text-center">@product.Title</p>
-                                <p class="card-title text-warning text-center">by <b>@product.Author</b></p>
+<div class="container my-4">
+    <!-- Search, Filter, and Sort Controls -->
+    <div class="row mb-4">
+        <!-- Search Input -->
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by title or author..." aria-label="Search products">
+                <button class="btn btn-primary" id="searchButton">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="col-md-4">
+            <select id="categoryFilter" class="form-select" aria-label="Filter by category">
+                <option value="">All Categories</option>
+                @foreach (var category in ViewBag.Categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+        </div>
+
+        <!-- Sort Options -->
+        <div class="col-md-3">
+            <select id="sortOption" class="form-select" aria-label="Sort products">
+                <option value="title-asc">Title (A-Z)</option>
+                <option value="title-desc">Title (Z-A)</option>
+                <option value="price-asc">Price (Low to High)</option>
+                <option value="price-desc">Price (High to Low)</option>
+                <option value="stock-asc">Stock (Low to High)</option>
+                <option value="stock-desc">Stock (High to Low)</option>
+            </select>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="col-md-1">
+            <button id="resetButton" class="btn btn-secondary w-100">Reset</button>
+        </div>
+    </div>
+
+    <!-- Product List Container -->
+    <div class="row pb-3" id="productList">
+        @foreach (var product in Model)
+        {
+            <div class="col-lg-3 col-sm-6 product-item">
+                <div class="row p-2">
+                    <div class="col-12 p-1">
+                        <div class="card border-0 p-3 shadow border-top border-5 rounded">
+                            @if (product.ProductImages is not null && product.ProductImages.Any())
+                            {
+                                <img src="@product.ProductImages.FirstOrDefault().ImageUrl" class="card-img-top rounded" alt="@product.Title cover image" />
+                            }
+                            else
+                            {
+                                <img src="https://placehold.co/500x600/png" class="card-img-top rounded" alt="Placeholder image" />
+                            }
+                            <div class="card-body pb-0">
+                                <div class="pl-1">
+                                    <p class="card-title h5 text-dark opacity-75 text-uppercase text-center">@product.Title</p>
+                                    <p class="card-title text-warning text-center">by <b>@product.Author</b></p>
+                                </div>
+                                <div class="pl-1">
+                                    <p class="text-dark text-opacity-75 text-center mb-2">
+                                        QIS:
+                                        <span>@product.QuantityInStock</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div class="pl-1">
-                                <p class="text-dark text-opacity-75 text-center mb-2">
-                                    QIS: 
-                                    <span>
-                                        @product.QuantityInStock
-                                    </span>
-                                </p>
+                            <div>
+                                <a asp-action="Details" asp-route-productId="@product.Id" class="btn btn-primary bg-gradient border-0 form-control">
+                                    Details
+                                </a>
                             </div>
-                            @*<div class="pl-1">
-                                <p class="text-dark text-opacity-75 text-center">As low as: 
-                                    <span>
-                                        @product.Price100.ToString("c")
-                                    </span>
-                                </p>
-                            </div>*@
-                        </div>
-                        <div>
-                            <a asp-action="Details"
-                            asp-route-productId="@product.Id"
-                            class="btn btn-primary bg-gradient border-0 form-control">
-                                Details
-                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
+
+@section Scripts {
+   
+
+    <script>
+        $(document).ready(function () {
+            // Initialize Toastr options
+            toastr.options = {
+                "positionClass": "toast-top-right",
+                "timeOut": "3000",
+                "closeButton": true,
+                "progressBar": true
+            };
+
+            // Function to fetch and update product list
+            function updateProductList() {
+                const searchTerm = $('#searchInput').val();
+                const categoryId = $('#categoryFilter').val();
+                const sortOption = $('#sortOption').val();
+
+                $.ajax({
+                    url: '/Customer/Home/GetProducts',
+                    type: 'GET',
+                    data: {
+                        searchTerm: searchTerm,
+                        categoryId: categoryId,
+                        sortOption: sortOption
+                    },
+                    success: function (data) {
+                        $('#productList').html(data);
+                        if (data.trim() === '') {
+                            toastr.info('No products found.');
+                        }
+                    },
+                    error: function () {
+                        toastr.error('Error fetching products. Please try again.');
+                    }
+                });
+            }
+
+            function checkResetState() {
+                const hasSearch = $('#searchInput').val().length > 0;
+                const hasCategory = $('#categoryFilter').val() !== '';
+                const hasSort = $('#sortOption').val() !== 'title-asc';
+                $('#resetButton').prop('disabled', !(hasSearch || hasCategory || hasSort));
+            }
+
+            $('#searchInput, #categoryFilter, #sortOption').on('input change', checkResetState);
+            checkResetState(); // Initial check
+
+            // Event handlers for search, filter, and sort
+            $('#searchButton').click(function () {
+                updateProductList();
+            });
+
+            $('#searchInput').on('keypress', function (e) {
+                if (e.which === 13) { // Enter key
+                    updateProductList();
+                }
+            });
+
+            $('#categoryFilter').change(function () {
+                updateProductList();
+            });
+
+            $('#sortOption').change(function () {
+                updateProductList();
+            });
+
+            $('#resetButton').click(function () {
+                $('#searchInput').val(''); // Clear search input
+                $('#categoryFilter').val(''); // Reset to "All Categories"
+                $('#sortOption').val('title-asc'); // Reset to default sort (Title A-Z)
+                updateProductList(); // Refresh product list
+                toastr.success('Filters and sort reset successfully.');
+            });
+
+            // Initial load (optional: trigger on page load)
+            updateProductList();
+        });
+    </script>
+}

@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Product>
+
+@foreach (var product in Model)
+{
+    <div class="col-lg-3 col-sm-6 product-item">
+        <div class="row p-2">
+            <div class="col-12 p-1">
+                <div class="card border-0 p-3 shadow border-top border-5 rounded">
+                    @if (product.ProductImages is not null && product.ProductImages.Any())
+                    {
+                        <img src="@product.ProductImages.FirstOrDefault().ImageUrl" class="card-img-top rounded" alt="@product.Title cover image" />
+                    }
+                    else
+                    {
+                        <img src="https://placehold.co/500x600/png" class="card-img-top rounded" alt="Placeholder image" />
+                    }
+                    <div class="card-body pb-0">
+                        <div class="pl-1">
+                            <p class="card-title h5 text-dark opacity-75 text-uppercase text-center">@product.Title</p>
+                            <p class="card-title text-warning text-center">by <b>@product.Author</b></p>
+                        </div>
+                        <div class="pl-1">
+                            <p class="text-dark text-opacity-75 text-center mb-2">
+                                QIS:
+                                <span>@product.QuantityInStock</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="Details" asp-route-productId="@product.Id" class="btn btn-primary bg-gradient border-0 form-control">
+                            Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

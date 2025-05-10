@@ -10,7 +10,8 @@ public class Mailer : IMailer
         var client = new SmtpClient("smtp.gmail.com", 587) {   
             EnableSsl = true,
             UseDefaultCredentials = false,
-            Credentials = new NetworkCredential("abood.reyhter@gmail.com", "yurs wuwe zpmb zpjl")
+            Credentials = new NetworkCredential(
+            "abood.reyhter@gmail.com", "yurs wuwe zpmb zpjl")
         };
  
         var message = new MailMessage(
