@@ -203,6 +203,15 @@ namespace BulkyBookWeb.Areas.Customer.Controllers {
 		public IActionResult Plus(int cartId) {
             var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.Id == cartId);
             var product = _unitOfWork.Product.Get(x => x.Id == cartFromDb.ProductId);
+           
+            var cartsFromDb = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId &&
+                                                                   u.ProductId == product.Id).ToList();
+            var sum = cartsFromDb.Sum(x => x.Count);
+            if (sum + 1 > product.QuantityInStock)
+            {
+                TempData["error"] = "Quantity In Stock Exceeded";
+                return RedirectToAction(nameof(Index));
+            }
             if (cartFromDb.Count + 1 > product.QuantityInStock)
             {
                 return RedirectToAction(nameof(Index), new { error = true });

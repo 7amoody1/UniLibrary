@@ -132,7 +132,7 @@
             <div class="col-md-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text bg-primary text-white">Qty</span>
-                    <input type="number" name="Count" value="1" min="1" max="1000"
+                    <input type="number" asp-for="Count" value="1" min="1" max="1000"
                            class="form-control quantity-input">
                 </div>
             </div>
@@ -162,9 +162,9 @@
             <div class="col-md-6">
                 <div class="input-group mb-3">
                     <span class="input-group-text bg-primary text-white">Qty</span>
-                    <input type="number" name="Count" value="1" min="1" max="1000"
-                           class="form-control quantity-input">
+                    <input type="number" asp-for="Count" value="1" class="form-control" readonly title="Borrowing is limited to 1 book">
                 </div>
+                <small class="text-muted">Borrowing is limited to one book.</small>
             </div>
             <div class="col-md-6">
                 <button type="submit" class="btn btn-primary w-100 fw-bold">
@@ -216,14 +216,11 @@
                 $('#order-type').val('@SD.Borrow');
             });
 
-            // Handle quantity changes
-            $(document).on('input', '.quantity-input', function() {
+            // Handle quantity changes (only for buy option)
+            $(document).on('input', '.quantity-input:not(:disabled)', function() {
                 const quantity = parseInt($(this).val()) || 1;
                 $(this).val(quantity > 1000 ? 1000 : quantity < 1 ? 1 : quantity);
-
-                if ($('#dynamicContent').find('.buy-summary').length) {
-                    updatePriceDisplay();
-                }
+                updatePriceDisplay();
             });
 
             function updatePriceDisplay() {

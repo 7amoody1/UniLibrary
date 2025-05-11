@@ -84,6 +84,13 @@ public class HomeController : Controller
         var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.ApplicationUserId == userId &&
                                                            u.ProductId == shoppingCart.ProductId &&
                                                            u.Type == shoppingCart.Type);
+        
+        
+        if (cartFromDb is not null && cartFromDb.Type == SD.Borrow)
+        {
+            TempData["error"] = "you already added one into your shopping cart.";
+            return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId });
+        }
         var product = _unitOfWork.Product.Get(x => x.Id == shoppingCart.ProductId);
         if (shoppingCart.Count > product.QuantityInStock)
         {
@@ -92,6 +99,15 @@ public class HomeController : Controller
 
         if (cartFromDb is not null)
         {
+            
+            var cartsFromDb = _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId &&
+                                                           u.ProductId == shoppingCart.ProductId).ToList();
+            var sum = cartsFromDb.Sum(x => x.Count);
+            if (sum + shoppingCart.Count > product.QuantityInStock)
+            {
+                TempData["error"] = "Quantity In Stock Exceeded";
+                return RedirectToAction(nameof(Details), new { productId = shoppingCart.ProductId });
+            }
             cartFromDb.Count += shoppingCart.Count;
             _unitOfWork.ShoppingCart.Update(cartFromDb);
             _unitOfWork.Save();
