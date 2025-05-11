@@ -228,9 +228,9 @@
                 const unitPrice = @Model.Product.Price;
                 const totalPrice = quantity * unitPrice;
 
-                $('.unit-price').text('$' + unitPrice.toFixed(2));
+                $('.unit-price').text(unitPrice.toFixed(2) + 'kwd');
                 $('.display-quantity').text(quantity);
-                $('.total-price').text('$' + totalPrice.toFixed(2));
+                $('.total-price').text(totalPrice.toFixed(2) + 'kwd');
             }
         });
     </script>

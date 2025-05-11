@@ -115,6 +115,14 @@ using BulkyBook.Utility;
                     ,includeProperties:"Product"));
             }
 
+            var sum = fines.Sum(x => x.Amount);
+            if (sum < 1.0)
+            {
+                TempData["error"] = "The fine should at least 1 kwd";
+                return RedirectToAction(nameof(Index), new { requestedData = SD.Fines});
+
+            }   
+
             var orderHeader = new OrderHeader
             {
                 Name = user.Name,
@@ -140,6 +148,7 @@ using BulkyBook.Utility;
         public IActionResult PayFine(FineVm fineVm)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                
             List<Fine> fines = [];
             if (fineVm.FineId is null)
             {
